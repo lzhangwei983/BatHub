@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BatHub</title>
+<style>
+  :root {
+    --bg-base: #0f1217;
+    --bg-sidebar: #151921;
+    --bg-card: #1a1f29;
+    --bg-card-hover: #202634;
+    --bg-running: #12241c;
+    --border: #272e3b;
+    --border-running: #10b981;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --green: #10b981;
+    --green-soft: rgba(16, 185, 129, 0.14);
+    --red: #ef4444;
+    --red-hover: #dc2626;
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.14);
+    --btn-sec: #252c38;
+    --btn-sec-hover: #323b4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2d3545; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3f4a60; }
+
+  .topbar {
+    height: 64px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 180px;
+  }
+  .brand-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+  }
+  .brand-title { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
+  .brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .search-wrap {
+    flex: 1;
+    max-width: 460px;
+    position: relative;
+  }
+  .search-input {
+    width: 100%;
+    background: #0d1015;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 34px 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    display: none;
+  }
+  .search-clear.visible { display: block; }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    color: var(--text-primary);
+    background: var(--btn-sec);
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--btn-sec-hover); }
+  .btn:disabled { opacity: 0.65; cursor: wait; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-success { background: var(--green); color: #052e1c; }
+  .btn-success:hover { background: #34d399; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: var(--red-hover); }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--text-secondary); }
+  .btn-ghost:hover { color: var(--text-primary); border-color: #3f4a60; }
+
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .sidebar {
+    width: 224px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 11px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+    transition: background 0.12s, color 0.12s;
+  }
+  .nav-item:hover { background: #1c222e; color: var(--text-primary); }
+  .nav-item.active { background: #232c3d; color: #fff; font-weight: 600; }
+  .nav-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+  .nav-tag {
+    font-size: 10px;
+    font-family: Consolas, monospace;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+    min-width: 34px;
+    text-align: center;
+  }
+  .nav-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.05);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+  .nav-item.active .nav-count { background: rgba(59,130,246,0.28); color: #93c5fd; }
+  .nav-section {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin: 14px 10px 6px;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 22px;
+    position: relative;
+  }
+  .banner {
+    background: linear-gradient(90deg, rgba(16,185,129,0.14), rgba(16,185,129,0.04));
+    border: 1px solid rgba(16,185,129,0.35);
+    border-radius: 10px;
+    padding: 13px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .banner-info {
+    background: linear-gradient(90deg, rgba(59,130,246,0.16), rgba(59,130,246,0.04));
+    border: 1px solid rgba(59,130,246,0.38);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: #bfdbfe;
+  }
+  .banner-ext {
+    background: linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.04));
+    border: 1px solid rgba(245,158,11,0.35);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 22px 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .banner-ext .banner-title { color: #fbbf24; }
+  .banner-ext .banner-desc { color: #fde68a; opacity: 0.85; margin-top: 3px; }
+  .workspace-strip {
+    background: #141922;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+  }
+  .workspace-strip-paths {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .card.external {
+    background: #1c1d18;
+    border-color: rgba(245,158,11,0.42);
+  }
+  .toast {
+    position: fixed;
+    right: 20px;
+    bottom: 42px;
+    background: #16251e;
+    border: 1px solid #10b981;
+    color: #d1fae5;
+    padding: 10px 15px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    max-width: 520px;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .banner-title { font-size: 14px; font-weight: 700; color: #34d399; }
+  .banner-desc { font-size: 12px; color: #a7f3d0; opacity: 0.85; margin-top: 3px; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .card:hover { background: var(--bg-card-hover); border-color: #384254; }
+  .card.running {
+    background: var(--bg-running);
+    border-color: var(--border-running);
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+  }
+  .pill-running { background: var(--green-soft); color: #34d399; border: 1px solid rgba(16,185,129,0.35); }
+  .pill-idle { background: rgba(148,163,184,0.1); color: var(--text-muted); }
+  .pill-action { background: var(--amber-soft); color: var(--amber); }
+  .pill-port { background: rgba(59,130,246,0.14); color: #93c5fd; font-family: Consolas, monospace; }
+  .pill-cat { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+  .pill-admin { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .pin-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 0 3px;
+  }
+  .pin-btn.pinned { color: var(--amber); }
+
+  .card-desc {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-path {
+    font-size: 11px;
+    font-family: Consolas, monospace;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 190px;
+    background: #1b202b;
+    border: 1px solid #353f52;
+    border-radius: 8px;
+    padding: 4px;
+    z-index: 40;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+  }
+  .dropdown.open .dropdown-menu { display: block; }
+  .dropdown-item {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    padding: 7px 10px;
+    font-size: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+  }
+  .dropdown-item:hover { background: #2a3344; }
+
+  .empty-box {
+    background: var(--bg-card);
+    border: 1px dashed #323b4d;
+    border-radius: 12px;
+    padding: 46px 26px;
+    text-align: center;
+    margin-top: 24px;
+  }
+  .empty-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .empty-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+
+  .statusbar {
+    height: 30px;
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 8, 12, 0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    width: 560px;
+    max-width: 92vw;
+    max-height: 86vh;
+    background: #171b24;
+    border: 1px solid #303849;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+  }
+  .modal-header {
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+  }
+  .modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .field input[type="text"], .field select {
+    width: 100%;
+    background: #0e1117;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 10px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    outline: none;
+  }
+  .field input[type="text"]:focus, .field select:focus { border-color: var(--accent); }
+  .row-inline { display: flex; gap: 8px; align-items: center; }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .root-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0e1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: Consolas, monospace;
+    margin-bottom: 5px;
+  }
+  .root-del {
+    color: #f87171;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo">&gt;_</div>
+      <div>
+        <div class="brand-title" id="ui-app-title">BatHub</div>
+        <div class="brand-sub" id="ui-app-subtitle"></div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <input id="searchInput" class="search-input" type="text" placeholder="" />
+      <span id="searchClear" class="search-clear">x</span>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn btn-primary" id="btnSync"></button>
+      <button class="btn" id="btnAddFolder"></button>
+      <button class="btn" id="btnAddFile"></button>
+      <button class="btn btn-ghost" id="btnOpenMirror"></button>
+      <button class="btn btn-ghost" id="btnSettings"></button>
+    </div>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="nav-item active" data-nav="__running__">
+        <span class="nav-left"><span class="nav-tag">RUN</span><span id="ui-nav-running"></span></span>
+        <span class="nav-count" id="cnt-__running__">0</span>
+      </div>
+      <div class="nav-item" data-nav="__pinned__">
+        <span class="nav-left"><span class="nav-tag">PIN</span><span id="ui-nav-pinned"></span></span>
+        <span class="nav-count" id="cnt-__pinned__">0</span>
+      </div>
+      <div class="nav-item" data-nav="__all__">
+        <span class="nav-left"><span class="nav-tag">ALL</span><span id="ui-nav-all"></span></span>
+        <span class="nav-count" id="cnt-__all__">0</span>
+      </div>
+
+      <div class="nav-section" id="ui-nav-categories"></div>
+      <div id="categoryNavList"></div>
+
+      <div class="sidebar-footer" id="ui-drop-hint"></div>
+    </aside>
+
+    <section class="content" id="contentArea"></section>
+  </div>
+
+  <div class="statusbar">
+    <span id="statusText">Ready</span>
+    <span id="statsSummary"></span>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="ui-settings-title"></span>
+        <button class="btn btn-ghost" onclick="closeSettings()">X</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label id="ui-settings-workspaces"></label>
+          <div id="workspaceRootsList"></div>
+          <button class="btn" id="btnSettingsAddRoot" style="margin-top:4px;"></button>
+        </div>
+
+        <label class="check-row">
+          <input type="checkbox" id="setMirrorEnabled" />
+          <span id="ui-settings-mirror-enable"></span>
+        </label>
+
+        <div class="field">
+          <label id="ui-settings-mirror-path"></label>
+          <div class="row-inline">
+            <input type="text" id="setMirrorDir" />
+            <button class="btn" id="btnBrowseMirror"></button>
+          </div>
+        </div>
+
+        <label class="check-row">
+          <input type="checkbox" id="setContextMenu" />
+          <span id="ui-settings-context-menu"></span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" id="setStartup" />
+          <span id="ui-settings-startup"></span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" id="setSilentDefault" />
+          <span id="ui-settings-silent-default"></span>
+        </label>
+
+        <div class="row-inline">
+          <div class="field" style="flex:1;">
+            <label id="ui-settings-language"></label>
+            <select id="setLanguage">
+              <option value="zh-CN">Chinese (zh-CN)</option>
+              <option value="en-US">English (en-US)</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;">
+            <label id="ui-settings-hotkey"></label>
+            <input type="text" id="setHotkey" readonly />
+          </div>
+        </div>
+
+        <div id="legacyImportRow" style="display:none; padding-top:4px;">
+          <button class="btn btn-ghost" id="btnImportLegacy"></button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnSettingsClose" onclick="closeSettings()"></button>
+        <button class="btn btn-primary" id="btnSettingsSave"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="ui-edit-title"></span>
+        <button class="btn btn-ghost" onclick="closeEdit()">X</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editId" />
+        <div class="field">
+          <label id="ui-edit-name"></label>
+          <input type="text" id="editName" />
+        </div>
+        <div class="field">
+          <label id="ui-edit-desc"></label>
+          <input type="text" id="editDesc" />
+        </div>
+        <div class="field">
+          <label id="ui-edit-category"></label>
+          <select id="editCategory"></select>
+        </div>
+        <div class="field">
+          <label id="ui-edit-ports"></label>
+          <input type="text" id="editPorts" placeholder="e.g. 8080, 5173" />
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="editHidden" />
+          <span id="ui-edit-hidden"></span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnEditReset"></button>
+        <button class="btn btn-primary" id="btnEditSave"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastBox" class="toast"></div>
+
+<script>
+  let state = {
+    entries: [],
+    statuses: {},
+    external_services: [],
+    categories: [],
+    settings: {},
+    i18n: {},
+    legacy_available: false,
+    status_message: "Ready",
+    syncing: false,
+    last_sync_epoch: 0,
+    toast_seq: 0,
+    toast_message: ""
+  };
+
+  let activeNav = "__running__";
+  let searchQuery = "";
+  let draftRoots = [];
+  let lastToastSeq = 0;
+  let toastTimer = null;
+
+  function send(action, payload) {
+    window.ipc.postMessage(JSON.stringify({ action, payload: payload || {} }));
+  }
+
+  function t(key) {
+    return (state.i18n && state.i18n[key]) || key;
+  }
+
+  function escHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function formatEpochTime(epochSec) {
+    if (!epochSec) return "--:--:--";
+    try {
+      const d = new Date(epochSec * 1000);
+      return d.toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function showToast(msg) {
+    const box = document.getElementById("toastBox");
+    if (!box || !msg) return;
+    box.textContent = msg;
+    box.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      box.classList.remove("show");
+    }, 4500);
+  }
+
+  window.__bathubUpdate = function(newState) {
+    state = newState;
+    applyTranslations();
+    const syncBtn = document.getElementById("btnSync");
+    if (syncBtn) {
+      syncBtn.disabled = !!state.syncing;
+      syncBtn.textContent = state.syncing ? t("syncing_btn") : t("sync_btn");
+    }
+    renderNavCounts();
+    renderContent();
+    if (state.status_message) {
+      const timeTag = state.last_sync_epoch ? (" [" + formatEpochTime(state.last_sync_epoch) + "]") : "";
+      document.getElementById("statusText").textContent = state.status_message + timeTag;
+    }
+    const visibleEntries = state.entries.filter(e => !e.hidden);
+    const runningCnt = visibleEntries.filter(e => (state.statuses[e.id] || {}).running).length;
+    const extCnt = (state.external_services || []).length;
+    const extText = extCnt > 0 ? (" (+" + extCnt + " local)") : "";
+    document.getElementById("statsSummary").textContent =
+      runningCnt + " running" + extText + " / " + visibleEntries.length + " scripts";
+
+    if (state.toast_seq && state.toast_seq > lastToastSeq) {
+      lastToastSeq = state.toast_seq;
+      if (state.toast_message) {
+        showToast(state.toast_message);
+      }
+    }
+  };
+
+  window.__bathubFocusSearch = function() {
+    const el = document.getElementById("searchInput");
+    el.focus();
+    el.select();
+  };
+
+  window.__bathubSetMirrorDir = function(dir) {
+    document.getElementById("setMirrorDir").value = dir;
+  };
+
+  function applyTranslations() {
+    document.getElementById("ui-app-title").textContent = t("app_title");
+    document.getElementById("ui-app-subtitle").textContent = t("app_subtitle");
+    document.getElementById("searchInput").placeholder = t("search_placeholder");
+    document.getElementById("btnSync").textContent = t("sync_btn");
+    document.getElementById("btnAddFolder").textContent = t("add_folder_btn");
+    document.getElementById("btnAddFile").textContent = t("add_file_btn");
+    document.getElementById("btnOpenMirror").textContent = t("open_mirror_btn");
+    document.getElementById("btnSettings").textContent = t("settings_btn");
+    document.getElementById("ui-nav-running").textContent = t("nav_running");
+    document.getElementById("ui-nav-pinned").textContent = t("nav_pinned");
+    document.getElementById("ui-nav-all").textContent = t("nav_all");
+    document.getElementById("ui-nav-categories").textContent = t("nav_categories");
+    document.getElementById("ui-drop-hint").textContent = t("drop_hint");
+
+    document.getElementById("ui-settings-title").textContent = t("settings_title");
+    document.getElementById("ui-settings-workspaces").textContent = t("settings_workspaces");
+    document.getElementById("btnSettingsAddRoot").textContent = t("add_folder_btn");
+    document.getElementById("ui-settings-mirror-enable").textContent = t("settings_mirror_enable");
+    document.getElementById("ui-settings-mirror-path").textContent = t("settings_mirror_path");
+    document.getElementById("btnBrowseMirror").textContent = t("settings_choose");
+    document.getElementById("ui-settings-context-menu").textContent = t("settings_context_menu");
+    document.getElementById("ui-settings-startup").textContent = t("settings_startup");
+    document.getElementById("ui-settings-silent-default").textContent = t("settings_silent_default");
+    document.getElementById("ui-settings-language").textContent = t("settings_language");
+    document.getElementById("ui-settings-hotkey").textContent = t("settings_hotkey");
+    document.getElementById("btnImportLegacy").textContent = t("settings_import_legacy");
+    document.getElementById("btnSettingsClose").textContent = t("settings_close");
+    document.getElementById("btnSettingsSave").textContent = t("settings_save");
+
+    document.getElementById("ui-edit-title").textContent = t("edit_title");
+    document.getElementById("ui-edit-name").textContent = t("edit_name");
+    document.getElementById("ui-edit-desc").textContent = t("edit_desc");
+    document.getElementById("ui-edit-category").textContent = t("edit_category");
+    document.getElementById("ui-edit-ports").textContent = t("edit_ports");
+    document.getElementById("ui-edit-hidden").textContent = t("edit_hidden");
+    document.getElementById("btnEditReset").textContent = t("edit_reset_auto");
+    document.getElementById("btnEditSave").textContent = t("edit_save");
+  }
+
+  function renderNavCounts() {
+    const visible = state.entries.filter(e => !e.hidden);
+    const runningCount = visible.filter(e => (state.statuses[e.id] || {}).running).length;
+    const extCount = (state.external_services || []).length;
+    const pinnedCount = visible.filter(e => e.pinned).length;
+
+    document.getElementById("cnt-__running__").textContent =
+      extCount > 0 ? (runningCount + "+" + extCount) : String(runningCount);
+    document.getElementById("cnt-__pinned__").textContent = pinnedCount;
+    document.getElementById("cnt-__all__").textContent = visible.length;
+
+    const catList = document.getElementById("categoryNavList");
+    catList.innerHTML = "";
+    for (const cat of state.categories) {
+      const count = visible.filter(e => e.category === cat.id).length;
+      const div = document.createElement("div");
+      div.className = "nav-item" + (activeNav === cat.id ? " active" : "");
+      div.dataset.nav = cat.id;
+      div.innerHTML =
+        '<span class="nav-left"><span class="nav-tag">' + escHtml(cat.icon) + '</span><span>' +
+        escHtml(t("cat_" + cat.id)) + '</span></span>' +
+        '<span class="nav-count">' + count + '</span>';
+      div.onclick = () => selectNav(cat.id);
+      catList.appendChild(div);
+    }
+
+    document.querySelectorAll(".sidebar > .nav-item").forEach(el => {
+      el.classList.toggle("active", el.dataset.nav === activeNav);
+    });
+  }
+
+  function selectNav(navId) {
+    activeNav = navId;
+    renderNavCounts();
+    renderContent();
+  }
+
+  function renderExternalServicesHtml() {
+    const externals = state.external_services || [];
+    if (externals.length === 0) return "";
+    let out = '<div class="banner-ext"><div><div class="banner-title">' +
+      escHtml(t("external_section_title")) + ' (' + externals.length + ')</div>' +
+      '<div class="banner-desc">' + escHtml(t("external_section_desc")) + '</div></div></div>';
+    for (const svc of externals) {
+      const adoptBtn = svc.suggested_bat_dir
+        ? '<button class="btn btn-success" onclick="adoptWorkspaceDir(\'' + escJs(svc.suggested_bat_dir) + '\')">' + escHtml(t("btn_adopt_dir")) + '</button>'
+        : "";
+      const dirBtn = svc.project_dir
+        ? '<button class="btn btn-ghost" onclick="openFolder(\'' + escJs(svc.project_dir) + '\')">' + escHtml(t("btn_folder")) + '</button>'
+        : "";
+      out += '<div class="card external">' +
+        '<div class="card-info">' +
+          '<div class="card-title-row">' +
+            '<span class="card-title">' + escHtml(svc.process_name) + '</span>' +
+            '<span class="pill pill-running">' + escHtml(t("status_running") + " :" + svc.port) + '</span>' +
+            '<span class="pill pill-port">PID ' + escHtml(svc.pid) + '</span>' +
+            '<span class="pill pill-cat">' + escHtml(svc.bind_addr) + '</span>' +
+          '</div>' +
+          '<div class="card-desc" title="' + escHtml(svc.cmdline) + '">' + escHtml(svc.cmdline) + '</div>' +
+          '<div class="card-path" title="' + escHtml(svc.project_dir) + '">' + escHtml(svc.project_dir || svc.cmdline) + '</div>' +
+        '</div>' +
+        '<div class="card-actions">' +
+          adoptBtn +
+          dirBtn +
+          '<button class="btn btn-danger" onclick="stopExternalPid(' + Number(svc.pid) + ')">' + escHtml(t("btn_stop")) + '</button>' +
+        '</div>' +
+      '</div>';
+    }
+    return out;
+  }
+
+  function clearSearch() {
+    const si = document.getElementById("searchInput");
+    const sc = document.getElementById("searchClear");
+    si.value = "";
+    searchQuery = "";
+    sc.classList.remove("visible");
+    renderContent();
+  }
+
+  function renderContent() {
+    const container = document.getElementById("contentArea");
+    const q = searchQuery.trim().toLowerCase();
+    const visible = state.entries.filter(e => !e.hidden);
+
+    let filtered = visible.filter(e => {
+      const st = state.statuses[e.id] || {};
+      if (q) {
+        const hay = [
+          e.display_name,
+          e.description,
+          e.project_name,
+          e.path,
+          t("cat_" + e.category),
+          (e.ports || []).join(" ")
+        ].join(" ").toLowerCase();
+        const tokens = q.split(/\s+/).filter(Boolean);
+        return tokens.every(tok => hay.includes(tok));
+      }
+      if (activeNav === "__running__") return !!st.running;
+      if (activeNav === "__pinned__") return !!e.pinned;
+      if (activeNav === "__all__") return true;
+      return e.category === activeNav;
+    });
+
+    let html = "";
+    const roots = (state.settings && state.settings.workspace_roots) || [];
+    if (!q && (activeNav === "__running__" || activeNav === "__all__")) {
+      const syncTimeText = state.last_sync_epoch
+        ? (" | " + t("last_sync_label") + ": " + formatEpochTime(state.last_sync_epoch))
+        : "";
+      html += '<div class="workspace-strip">' +
+        '<div class="workspace-strip-paths" title="' + escHtml(roots.join("\n")) + '">' +
+        '<strong>' + escHtml(t("workspace_summary_label")) + ' (' + roots.length + '):</strong> ' +
+        escHtml(roots.join(" ; ")) + escHtml(syncTimeText) +
+        '</div>' +
+        '<button class="btn btn-ghost" style="padding:4px 9px;font-size:11px;" onclick="openSettings()">' +
+        escHtml(t("manage_workspaces_btn")) + '</button>' +
+      '</div>';
+    }
+
+    if (q) {
+      html += '<div class="banner-info">' +
+        '<span>' + escHtml(t("search_banner_prefix")) + ' "' + escHtml(searchQuery.trim()) +
+        '" (' + filtered.length + ') - ' + escHtml(t("search_banner_note")) + '</span>' +
+        '<button class="btn btn-ghost" style="padding:4px 10px;font-size:11.5px;" onclick="clearSearch()">' +
+        escHtml(t("btn_clear_search")) + '</button>' +
+      '</div>';
+    } else if (activeNav === "__running__") {
+      html += '<div class="banner"><div><div class="banner-title">' +
+        escHtml(t("banner_running_title")) + ' (' + filtered.length + ')</div>' +
+        '<div class="banner-desc">' + escHtml(t("banner_running_desc")) + '</div></div></div>';
+    }
+
+    if (filtered.length === 0) {
+      const isRun = !q && activeNav === "__running__";
+      const hasExt = isRun && (state.external_services || []).length > 0;
+      const boxStyle = hasExt ? ' style="padding:18px 20px;margin-top:8px;"' : '';
+      html += '<div class="empty-box"' + boxStyle + '><div class="empty-title">' +
+        escHtml(isRun ? t("empty_running_title") : t("empty_all_title")) +
+        '</div><div class="empty-desc">' +
+        escHtml(isRun ? t("empty_running_desc") : t("empty_all_desc")) +
+        '</div></div>';
+      if (isRun) {
+        html += renderExternalServicesHtml();
+      }
+      container.innerHTML = html;
+      return;
+    }
+
+    for (const item of filtered) {
+      const st = state.statuses[item.id] || {};
+      const isRun = !!st.running;
+      const isAction = item.role !== "service";
+
+      let statusBadge = "";
+      if (isRun) {
+        const detail = st.matched_port ? (" :" + st.matched_port) : "";
+        statusBadge = '<span class="pill pill-running">' + escHtml(t("status_running") + detail) + '</span>';
+      } else if (isAction) {
+        statusBadge = '<span class="pill pill-action">' + escHtml(t("status_action")) + '</span>';
+      } else {
+        statusBadge = '<span class="pill pill-idle">' + escHtml(t("status_idle")) + '</span>';
+      }
+
+      const portsHtml = (item.ports || []).length > 0
+        ? '<span class="pill pill-port">:' + item.ports.join(", :") + '</span>'
+        : "";
+      const adminHtml = item.requires_admin
+        ? '<span class="pill pill-admin">UAC</span>'
+        : "";
+      const catBadge = (q || activeNav.startsWith("__"))
+        ? '<span class="pill pill-cat">' + escHtml(t("cat_" + item.category)) + '</span>'
+        : "";
+
+      let actionsMenu = "";
+      if (item.paired_actions && item.paired_actions.length > 0) {
+        actionsMenu = '<div class="dropdown"><button class="btn btn-ghost" onclick="toggleDropdown(this, event)">' +
+          escHtml(t("btn_more")) + ' v</button><div class="dropdown-menu">';
+        for (const act of item.paired_actions) {
+          actionsMenu += '<button class="dropdown-item" onclick="launchPath(\'' +
+            escJs(act.path) + '\', false, ' + !!act.requires_admin + ')">' +
+            escHtml(act.name) + '</button>';
+        }
+        actionsMenu += '</div></div>';
+      }
+
+      const startLabel = isRun ? t("btn_restart") : t("btn_start");
+      const stopBtn = isRun
+        ? '<button class="btn btn-danger" onclick="stopItem(\'' + escJs(item.id) + '\')">' + escHtml(t("btn_stop")) + '</button>'
+        : "";
+
+      html += '<div class="card ' + (isRun ? "running" : "") + '">' +
+        '<div class="card-info">' +
+          '<div class="card-title-row">' +
+            '<button class="pin-btn ' + (item.pinned ? "pinned" : "") + '" onclick="togglePin(\'' + escJs(item.id) + '\')" title="Pin">*</button>' +
+            '<span class="card-title">' + escHtml(item.display_name) + '</span>' +
+            statusBadge + portsHtml + adminHtml + catBadge +
+          '</div>' +
+          '<div class="card-desc" title="' + escHtml(item.description) + '">' + escHtml(item.description) + '</div>' +
+          '<div class="card-path" title="' + escHtml(item.path) + '">' + escHtml(item.path) + '</div>' +
+        '</div>' +
+        '<div class="card-actions">' +
+          stopBtn +
+          '<button class="btn btn-primary" onclick="launchItem(\'' + escJs(item.id) + '\', false)">' + escHtml(startLabel) + '</button>' +
+          '<button class="btn" onclick="launchItem(\'' + escJs(item.id) + '\', true)" title="Run Hidden">' + escHtml(t("btn_silent")) + '</button>' +
+          actionsMenu +
+          '<button class="btn btn-ghost" onclick="openTerminal(\'' + escJs(item.project_dir) + '\')">' + escHtml(t("btn_terminal")) + '</button>' +
+          '<button class="btn btn-ghost" onclick="openFolder(\'' + escJs(item.path) + '\')">' + escHtml(t("btn_folder")) + '</button>' +
+          '<button class="btn btn-ghost" onclick="openEdit(\'' + escJs(item.id) + '\')">' + escHtml(t("btn_edit")) + '</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    if (!q && activeNav === "__running__") {
+      html += renderExternalServicesHtml();
+    }
+
+    container.innerHTML = html;
+  }
+
+  function escJs(s) {
+    return String(s || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  }
+
+  function toggleDropdown(btn, ev) {
+    ev.stopPropagation();
+    const dd = btn.parentElement;
+    const wasOpen = dd.classList.contains("open");
+    document.querySelectorAll(".dropdown.open").forEach(d => d.classList.remove("open"));
+    if (!wasOpen) dd.classList.add("open");
+  }
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".dropdown.open").forEach(d => d.classList.remove("open"));
+  });
+
+  function launchItem(id, silentOverride) {
+    send("launch", { id, silent_override: silentOverride });
+  }
+  function launchPath(path, silent, requiresAdmin) {
+    send("launch_path", { path, silent, requires_admin: requiresAdmin });
+  }
+  function stopItem(id) {
+    send("stop", { id });
+  }
+  function stopExternalPid(pid) {
+    send("stop_pid", { pid });
+  }
+  function adoptWorkspaceDir(dir) {
+    send("add_workspace_dir", { dir });
+  }
+  function togglePin(id) {
+    send("toggle_pin", { id });
+  }
+  function openTerminal(dir) {
+    send("open_terminal", { dir });
+  }
+  function openFolder(path) {
+    send("open_folder", { path });
+  }
+
+  function openSettings() {
+    draftRoots = [...(state.settings.workspace_roots || [])];
+    renderDraftRoots();
+    document.getElementById("setMirrorEnabled").checked = !!state.settings.mirror_enabled;
+    document.getElementById("setMirrorDir").value = state.settings.shortcut_mirror_dir || "";
+    document.getElementById("setContextMenu").checked = !!state.settings.context_menu_enabled;
+    document.getElementById("setStartup").checked = !!state.settings.run_on_startup;
+    document.getElementById("setSilentDefault").checked = !!state.settings.silent_run_default;
+    document.getElementById("setLanguage").value = state.settings.language || "zh-CN";
+    document.getElementById("setHotkey").value = state.settings.hotkey || "Alt+Shift+B";
+    document.getElementById("legacyImportRow").style.display = state.legacy_available ? "block" : "none";
+    document.getElementById("settingsModal").classList.add("open");
+  }
+  function closeSettings() {
+    document.getElementById("settingsModal").classList.remove("open");
+  }
+  function renderDraftRoots() {
+    const box = document.getElementById("workspaceRootsList");
+    box.innerHTML = "";
+    for (let i = 0; i < draftRoots.length; i++) {
+      const chip = document.createElement("div");
+      chip.className = "root-chip";
+      chip.innerHTML = '<span>' + escHtml(draftRoots[i]) + '</span>' +
+        '<button class="root-del" onclick="removeDraftRoot(' + i + ')">x</button>';
+      box.appendChild(chip);
+    }
+  }
+  function removeDraftRoot(idx) {
+    draftRoots.splice(idx, 1);
+    renderDraftRoots();
+  }
+  window.__bathubAddDraftRoot = function(dir) {
+    if (dir && !draftRoots.some(r => r.toLowerCase() === dir.toLowerCase())) {
+      draftRoots.push(dir);
+      renderDraftRoots();
+    }
+  };
+
+  function openEdit(id) {
+    const item = state.entries.find(e => e.id === id);
+    if (!item) return;
+    document.getElementById("editId").value = item.id;
+    document.getElementById("editName").value = item.display_name;
+    document.getElementById("editDesc").value = item.description;
+    const sel = document.getElementById("editCategory");
+    sel.innerHTML = "";
+    for (const cat of state.categories) {
+      const opt = document.createElement("option");
+      opt.value = cat.id;
+      opt.textContent = t("cat_" + cat.id);
+      if (cat.id === item.category) opt.selected = true;
+      sel.appendChild(opt);
+    }
+    document.getElementById("editPorts").value = (item.ports || []).join(", ");
+    document.getElementById("editHidden").checked = !!item.hidden;
+    document.getElementById("editModal").classList.add("open");
+  }
+  function closeEdit() {
+    document.getElementById("editModal").classList.remove("open");
+  }
+
+  document.querySelectorAll(".sidebar > .nav-item").forEach(el => {
+    el.onclick = () => selectNav(el.dataset.nav);
+  });
+
+  const searchInput = document.getElementById("searchInput");
+  const searchClear = document.getElementById("searchClear");
+  searchInput.addEventListener("input", () => {
+    searchQuery = searchInput.value;
+    searchClear.classList.toggle("visible", searchQuery.length > 0);
+    renderContent();
+  });
+  searchClear.onclick = () => {
+    searchInput.value = "";
+    searchQuery = "";
+    searchClear.classList.remove("visible");
+    renderContent();
+  };
+
+  document.getElementById("btnSync").onclick = () => {
+    const btn = document.getElementById("btnSync");
+    btn.disabled = true;
+    btn.textContent = t("syncing_btn");
+    send("sync");
+  };
+  document.getElementById("btnAddFolder").onclick = () => send("pick_add_folder");
+  document.getElementById("btnAddFile").onclick = () => send("pick_add_file");
+  document.getElementById("btnOpenMirror").onclick = () => send("open_mirror");
+  document.getElementById("btnSettings").onclick = openSettings;
+  document.getElementById("btnSettingsAddRoot").onclick = () => send("pick_root_for_settings");
+  document.getElementById("btnBrowseMirror").onclick = () => send("pick_mirror_dir");
+  document.getElementById("btnImportLegacy").onclick = () => {
+    send("import_legacy");
+    closeSettings();
+  };
+  document.getElementById("btnSettingsSave").onclick = () => {
+    send("save_settings", {
+      workspace_roots: draftRoots,
+      mirror_enabled: document.getElementById("setMirrorEnabled").checked,
+      shortcut_mirror_dir: document.getElementById("setMirrorDir").value.trim(),
+      context_menu_enabled: document.getElementById("setContextMenu").checked,
+      run_on_startup: document.getElementById("setStartup").checked,
+      silent_run_default: document.getElementById("setSilentDefault").checked,
+      language: document.getElementById("setLanguage").value
+    });
+    closeSettings();
+  };
+
+  document.getElementById("btnEditSave").onclick = () => {
+    const portsRaw = document.getElementById("editPorts").value;
+    const ports = portsRaw
+      .split(",")
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n > 0 && n <= 65535);
+    send("update_entry", {
+      id: document.getElementById("editId").value,
+      display_name: document.getElementById("editName").value.trim(),
+      description: document.getElementById("editDesc").value.trim(),
+      category: document.getElementById("editCategory").value,
+      ports,
+      hidden: document.getElementById("editHidden").checked
+    });
+    closeEdit();
+  };
+  document.getElementById("btnEditReset").onclick = () => {
+    send("reset_entry", { id: document.getElementById("editId").value });
+    closeEdit();
+  };
+
+  window.addEventListener("DOMContentLoaded", () => {
+    send("ready");
+  });
+</script>
+</body>
+</html>

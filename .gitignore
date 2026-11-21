@@ -1,0 +1,9 @@
+/target/
+*.WebView2/
+bathub_data.json
+bathub.lock
+bathub_panic.log
+/Shortcuts/
+/BatHub.exe
+*.pdb
+*.log
