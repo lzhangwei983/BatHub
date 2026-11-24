@@ -843,8 +843,8 @@
     renderContent();
   }
 
-  function renderExternalServicesHtml() {
-    const externals = state.external_services || [];
+  function renderExternalServicesHtml(listOverride) {
+    const externals = listOverride || state.external_services || [];
     if (externals.length === 0) return "";
     let out = '<div class="banner-ext"><div><div class="banner-title">' +
       escHtml(t("external_section_title")) + ' (' + externals.length + ')</div>' +
@@ -877,6 +877,14 @@
     return out;
   }
 
+  function normalizeSearchTokens(q) {
+    return q.split(/\s+/).filter(Boolean).map(tok => {
+      const m = tok.match(/^(?:https?:\/\/)?(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1?\]):(\d{2,5})(?:\/.*)?$/i);
+      if (m) return ":" + m[1];
+      return tok;
+    });
+  }
+
   function clearSearch() {
     const si = document.getElementById("searchInput");
     const sc = document.getElementById("searchClear");
@@ -889,20 +897,23 @@
   function renderContent() {
     const container = document.getElementById("contentArea");
     const q = searchQuery.trim().toLowerCase();
+    const tokens = q ? normalizeSearchTokens(q) : [];
     const visible = state.entries.filter(e => !e.hidden);
 
     let filtered = visible.filter(e => {
       const st = state.statuses[e.id] || {};
       if (q) {
+        const portTokens = (e.ports || []).map(p =>
+          p + " :" + p + " http://127.0.0.1:" + p + " http://localhost:" + p
+        ).join(" ");
         const hay = [
           e.display_name,
           e.description,
           e.project_name,
           e.path,
           t("cat_" + e.category),
-          (e.ports || []).join(" ")
+          portTokens
         ].join(" ").toLowerCase();
-        const tokens = q.split(/\s+/).filter(Boolean);
         return tokens.every(tok => hay.includes(tok));
       }
       if (activeNav === "__running__") return !!st.running;
@@ -910,6 +921,25 @@
       if (activeNav === "__all__") return true;
       return e.category === activeNav;
     });
+
+    let matchedExternals = [];
+    if (q) {
+      matchedExternals = (state.external_services || []).filter(svc => {
+        const p = svc.port;
+        const hay = [
+          svc.process_name,
+          svc.cmdline,
+          svc.project_dir,
+          svc.bind_addr,
+          String(svc.pid),
+          String(p),
+          ":" + p,
+          "http://127.0.0.1:" + p,
+          "http://localhost:" + p
+        ].join(" ").toLowerCase();
+        return tokens.every(tok => hay.includes(tok));
+      });
+    }
 
     let html = "";
     const roots = (state.settings && state.settings.workspace_roots) || [];
@@ -928,9 +958,10 @@
     }
 
     if (q) {
+      const totalHits = filtered.length + matchedExternals.length;
       html += '<div class="banner-info">' +
         '<span>' + escHtml(t("search_banner_prefix")) + ' "' + escHtml(searchQuery.trim()) +
-        '" (' + filtered.length + ') - ' + escHtml(t("search_banner_note")) + '</span>' +
+        '" (' + totalHits + ') - ' + escHtml(t("search_banner_note")) + '</span>' +
         '<button class="btn btn-ghost" style="padding:4px 10px;font-size:11.5px;" onclick="clearSearch()">' +
         escHtml(t("btn_clear_search")) + '</button>' +
       '</div>';
@@ -940,7 +971,7 @@
         '<div class="banner-desc">' + escHtml(t("banner_running_desc")) + '</div></div></div>';
     }
 
-    if (filtered.length === 0) {
+    if (filtered.length === 0 && matchedExternals.length === 0) {
       const isRun = !q && activeNav === "__running__";
       const hasExt = isRun && (state.external_services || []).length > 0;
       const boxStyle = hasExt ? ' style="padding:18px 20px;margin-top:8px;"' : '';
@@ -1020,7 +1051,9 @@
       '</div>';
     }
 
-    if (!q && activeNav === "__running__") {
+    if (q && matchedExternals.length > 0) {
+      html += renderExternalServicesHtml(matchedExternals);
+    } else if (!q && activeNav === "__running__") {
       html += renderExternalServicesHtml();
     }
 
